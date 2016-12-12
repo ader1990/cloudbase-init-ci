@@ -144,7 +144,7 @@ class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
         if not link:
             return
 
-        LOG.info("Replacing Cloudbase-Init's files...")
+        LOG.info("Replacing Cloudbase-Init's files with %s", link)
 
         LOG.debug("Download and extract installation bundle.")
         if link.startswith("\\\\"):
@@ -178,7 +178,8 @@ class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
             # Nothing to replace.
             return
 
-        LOG.info("Replacing Cloudbase-Init's code...")
+        LOG.info("Replacing Cloudbase-Init's code "
+                 "with %s", CONFIG.argus.git_command)
 
         LOG.debug("Getting Cloudbase-Init location...")
         # Get Cloudbase-Init python location.
