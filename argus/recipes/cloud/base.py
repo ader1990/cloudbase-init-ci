@@ -132,6 +132,7 @@ class BaseCloudbaseinitRecipe(base.BaseRecipe):
         LOG.info("Preparing instance...")
         self.wait_for_boot_completion()
         self.set_mtu()
+        self.create_mock_metadata(service_type)
         self.execution_prologue()
         self.get_installation_script()
         self.install_cbinit()

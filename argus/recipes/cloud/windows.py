@@ -16,6 +16,7 @@
 """Windows Cloudbase-Init recipes."""
 
 import base64
+import json
 import ntpath
 import os
 import zipfile
@@ -42,6 +43,14 @@ _CBINIT_TARGET_LOCATION = r"C:\cloudbaseinit"
 
 class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
     """Recipe for preparing a Windows instance."""
+
+    def __init__(self, backend):
+        super(CloudbaseinitRecipe, self).__init__(backend)
+        self._arestor_client = arestor_client.ArestorClient(
+            base_url=CONFIG.arestor.base_url,
+            api_key=CONFIG.arestor.api_key,
+            secret=CONFIG.arestor.secret,
+            client_id="instance-" + backend.instance_server()['name'])
 
     def wait_for_boot_completion(self):
         LOG.info("Waiting for first boot completion...")
@@ -256,6 +265,40 @@ class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
         LOG.debug("Wait for the Cloudbase-Init service to stop ...")
         self._backend.remote_client.manager.wait_cbinit_service()
 
+    def gen_index(self):
+        import random
+        return random.randint(0,10000)
+
+    def create_mock_metadata(self, service_type):
+        """Create the mocked meta-data."""
+        instance_server = self._backend.instance_server()
+        name = instance_server["name"]
+        # HACK(mmicu): for Openstack we have the service_type set to http
+        self._arestor_client.set_namespace("openstack")
+        self._arestor_client.set_name(name)
+        self._arestor_client.set_project_id("project-{}".format(name))
+        self._arestor_client.set_launch_index("0")
+        self._arestor_client.set_availability_zone(
+            instance_server.get("OS-EXT-AZ:availability_zone",
+                                "az-{}".format(name)))
+        self._arestor_client.set_random_seed("random-seed-{}".format(name))
+        self._arestor_client.set_userdata(self._backend.userdata)
+        self._arestor_client.set_metadata(json.dumps(self._backend.metadata))
+        self._arestor_client.set_uuid(instance_server["id"])
+        self._arestor_client.set_uuid(name.lower())
+        argus_x509_cert = [{
+                    "name": "argus_x509_cert",
+                    "type": "x509",
+                    "data": util.get_certificate()
+                }]
+        argus_ssh_pubkeys = { self.gen_index(): pub_key for pub_key in util.get_public_keys()}
+        self._arestor_client.set_ssh_pubkeys(json.dumps(argus_ssh_pubkeys))
+        self._arestor_client.set_x509_certs(json.dumps(argus_x509_cert))
+
+    def delete_mock_metadata(self):
+        """Delete the mocked meta-data."""
+        self._arestor_client.delete_all_data()
+
     def prepare_cbinit_config(self, service_type):
         """Prepare the Cloudbase-Init config."""
         self._cbinit_conf = cbinit_config.CBInitConfig(
@@ -284,6 +327,14 @@ class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
         self._cbinit_conf.set_conf_value(
             name="check_latest_version",
             value=CONFIG.cloudbaseinit.check_latest_version)
+        self._cbinit_conf.set_conf_value(
+            name="metadata_base_url",
+            value=self._arestor_client.get_url(),
+            section="openstack")
+        self._cbinit_unattend_conf.set_conf_value(
+            name="metadata_base_url",
+            value=self._arestor_client.get_url(),
+            section="openstack")
 
         self._backend.remote_client.manager.prepare_config(
             self._cbinit_conf, self._cbinit_unattend_conf)
@@ -398,6 +449,19 @@ class BaseNextLogonRecipe(CloudbaseinitRecipe):
         self._cbinit_conf.set_conf_value(
             name="first_logon_behaviour",
             value=self.behaviour)
+        self._cbinit_conf.set_conf_value(
+            name="plugins",
+            value="cloudbaseinit.plugins.windows.createuser."
+                  "CreateUserPlugin,"
+                  "cloudbaseinit.plugins.windows.setuserpassword."
+                  "SetUserPasswordPlugin,"
+                  "cloudbaseinit.plugins.windows.winrmlistener."
+                  "ConfigWinRMListenerPlugin")
+
+
+class AlwaysChangeLogonPasswordRecipeWinrmCertificate(BaseNextLogonRecipe):
+    # NOTE: to be implemented
+    pass   
 
 
 class AlwaysChangeLogonPasswordRecipe(BaseNextLogonRecipe):
