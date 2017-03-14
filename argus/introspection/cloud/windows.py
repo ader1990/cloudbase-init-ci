@@ -28,7 +28,8 @@ from argus import config as argus_config
 from argus import exceptions
 from argus.introspection.cloud import base
 from argus import util
-
+from argus import log as argus_log
+LOG = argus_log.LOG
 CONFIG = argus_config.CONFIG
 
 # escaped characters for powershell paths
@@ -149,7 +150,8 @@ def get_cbinit_dir(execute_function):
         status = execute_function(
             'Test-Path "{}\\Cloudbase` Solutions"'.format(
                 _location), command_type=util.POWERSHELL).strip().lower()
-
+        LOG.info("Status is {}".format(status))
+        LOG.info("_location is {}".format(_location))
         if status == "true":
             return ntpath.join(
                 location,

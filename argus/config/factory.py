@@ -15,6 +15,7 @@
 _OPT_PATHS = (
     'argus.config.ci.ArgusOptions',
     'argus.config.cloudbaseinit.CloudbaseInitOptions',
+    'argus.config.azure.AzureOptions',
     'argus.config.openstack.OpenStackOptions',
     'argus.config.mock_cloudstack.MockCloudStackOptions',
     'argus.config.mock_ec2.MockEC2Options',

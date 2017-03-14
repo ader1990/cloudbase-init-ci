@@ -16,6 +16,7 @@
 import unittest
 
 from argus.backends.heat import heat_backend
+from argus.backends.azure import azure_backend
 from argus.backends.tempest import manager
 from argus.backends.tempest import cloud as tempest_cloud_backend
 from argus.backends.tempest import tempest_backend
@@ -53,6 +54,12 @@ class ScenarioSmoke(BaseWindowsScenario):
 
     test_classes = (test_smoke.TestSmoke, )
 
+
+class ScenarioAzure(BaseWindowsScenario):
+
+    test_classes = (smoke.TestNoError, )
+    backend_type = azure_backend.WindowsAzureBackend
+    recipe_type = recipe.CloudbaseinitAzureRecipe
 
 class ScenarioSmokeHeat(BaseWindowsScenario):
 

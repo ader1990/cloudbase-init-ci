@@ -59,7 +59,7 @@ def download_argus_resource(resource_path, location):
                          argus `resources` directory
     :param location: Where to save the resource
     """
-    base_url = ci.RESOURCES_LINK
+    base_url = "http://10.10.1.26/html/stefan/cloudbase-init-ci/argus/resources"
     base_url = base_url.rsplit("/", 1)[0]
 
     url_resource = urlparse.urljoin(base_url, resource_path)

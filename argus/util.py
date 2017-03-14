@@ -16,6 +16,7 @@
 import base64
 import collections
 import contextlib
+import functools
 import logging
 import pkgutil
 import random
@@ -28,6 +29,9 @@ import time
 import six
 
 from argus import exceptions
+from argus import log as argus_log
+
+LOG = argus_log.LOG
 
 CMD = "cmd"
 BAT_SCRIPT = "bat"
@@ -362,3 +366,30 @@ WINDOWS_VERSION = {
         True: WINDOWS_NANO
     }
 }
+
+def retry_on_error(max_attempts=5, sleep_seconds=0,
+                   terminal_exceptions=[]):
+    def _retry_on_error(func):
+        @functools.wraps(func)
+        def _exec_retry(*args, **kwargs):
+            i = 0
+            while True:
+                try:
+                    return func(*args, **kwargs)
+                except KeyboardInterrupt as ex:
+                    LOG.debug("Got a KeyboardInterrupt, skip retrying")
+                    LOG.exception(ex)
+                    raise
+                except Exception as ex:
+                    if any([isinstance(ex, tex)
+                            for tex in terminal_exceptions]):
+                        raise
+
+                    i += 1
+                    if i < max_attempts:
+                        LOG.debug("Exception occurred, retrying: %s", ex)
+                        time.sleep(sleep_seconds)
+                    else:
+                        raise
+        return _exec_retry
+    return _retry_on_error
