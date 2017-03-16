@@ -222,6 +222,11 @@ class CloudbaseinitRecipe(base.BaseCloudbaseinitRecipe):
                                      location=_CBINIT_TARGET_LOCATION),
                       command_type=util.CMD)
 
+        command = '"{folder}" -m pip install {location}'
+        self._execute(command.format(folder=python,
+                                     location=_CBINIT_TARGET_LOCATION),
+                      command_type=util.CMD)
+
     def pre_sysprep(self):
         # Patch the installation of Cloudbase-Init in order to create
         # a file when the execution ends. We're doing this instead of
@@ -570,6 +575,97 @@ class CloudbaseinitEnableTrim(CloudbaseinitRecipe):
             name="plugins",
             value="cloudbaseinit.plugins.common.trim"
                   ".TrimConfigPlugin")
+
+
+class CloudbaseinitAzureRecipe(CloudbaseinitRecipe):
+    """Recipe for testing Azure configuration."""
+
+    def prepare_cbinit_config(self, service_type):
+        super(CloudbaseinitAzureRecipe, self).prepare_cbinit_config(
+            service_type)
+        self._cbinit_conf.set_conf_value(
+            name='metadata_services',
+            value='cloudbaseinit.metadata.services.azureservice.AzureService')
+        self._cbinit_unattend_conf.set_conf_value(
+            name='metadata_services',
+            value='cloudbaseinit.metadata.services.azureservice.AzureService')
+        self._cbinit_unattend_conf.set_conf_value(
+            name='allow_reboot', value='false')
+        self._cbinit_unattend_conf.set_conf_value(
+            name='san_policy', value='OnlineAll')
+
+        self._cbinit_conf.set_conf_value(
+            name="plugins",
+            value="cloudbaseinit.plugins.windows.createuser.CreateUserPlugin,"
+                  "cloudbaseinit.plugins.common.setuserpassword."
+                  "SetUserPasswordPlugin,"
+                  "cloudbaseinit.plugins.windows.certificates."
+                  "ServerCertificatesPlugin,"
+                  "cloudbaseinit.plugins.windows.winrmlistener."
+                  "ConfigWinRMListenerPlugin,"
+                  "cloudbaseinit.plugins.windows.updates."
+                  "WindowsAutoUpdatesPlugin,"
+                  "cloudbaseinit.plugins.windows.ntpclient.NTPClientPlugin,"
+                  "cloudbaseinit.plugins.windows.licensing."
+                  "WindowsLicensingPlugin,"
+                  "cloudbaseinit.plugins.windows.rdp.RDPSettingsPlugin,"
+                  "cloudbaseinit.plugins.windows.rdp."
+                  "RDPPostCertificateThumbprintPlugin,"
+                  "cloudbaseinit.plugins.windows.bootconfig.BCDConfigPlugin,"
+                  "cloudbaseinit.plugins.windows.userdata.UserDataPlugin,"
+                  "cloudbaseinit.plugins.windows.displayidletimeout."
+                  "DisplayIdleTimeoutConfigPlugin,"
+                  "cloudbaseinit.plugins.windows.winrmcertificateauth."
+                  "ConfigWinRMCertificateAuthPlugin,"
+                  "cloudbaseinit.plugins.windows.azureguestagent."
+                  "AzureGuestAgentPlugin")
+        self._cbinit_conf.set_conf_value(
+            name='metadata_report_provisioning_started', value='false')
+        self._cbinit_conf.set_conf_value(
+            name='metadata_report_provisioning_completed', value='true')
+        self._cbinit_conf.set_conf_value(
+            name='rename_admin_user', value='true')
+        self._cbinit_conf.set_conf_value(
+            name='winrm_enable_basic_auth', value='true')
+        self._cbinit_conf.set_conf_value(
+            name='first_logon_behaviour', value='no')
+        self._cbinit_conf.set_conf_value(
+            name='username', value='admin1')
+        self._cbinit_conf.set_conf_value(
+            name='display_idle_timeout', value='120')
+        self._cbinit_conf.set_conf_value(
+            name='bcd_enable_auto_recovery', value='true')
+        self._cbinit_conf.set_conf_value(
+            name='page_file_volume_labels', value='Temporary Storage')
+        self._cbinit_conf.set_conf_value(
+            name='trim_enabled', value='true')
+        self._cbinit_conf.set_conf_value(
+            name='userdata_save_path', value=r'C:\userdata.ps1')
+        self._cbinit_conf.set_conf_value(
+            name='bcd_boot_status_policy', value='ignoreallfailures')
+        self._cbinit_conf.set_conf_value(
+            name='activate_windows', value='true')
+
+        self._cbinit_unattend_conf.set_conf_value(
+            name="plugins",
+            value="cloudbaseinit.plugins.windows.bootconfig."
+                  "BootStatusPolicyPlugin,"
+                  "cloudbaseinit.plugins.windows.sanpolicy.SANPolicyPlugin,"
+                  "cloudbaseinit.plugins.windows.mtu.MTUPlugin,"
+                  "cloudbaseinit.plugins.windows.pagefiles.PageFilesPlugin,"
+                  "cloudbaseinit.plugins.common.trim.TrimConfigPlugin,"
+                  "cloudbaseinit.plugins.windows.displayidletimeout."
+                  "DisplayIdleTimeoutConfigPlugin,"
+                  "cloudbaseinit.plugins.windows.extendvolumes."
+                  "ExtendVolumesPlugin,"
+                  "cloudbaseinit.plugins.common.sethostname."
+                  "SetHostNamePlugin")
+        self._cbinit_unattend_conf.set_conf_value(
+            name='metadata_report_provisioning_started', value='true')
+        self._cbinit_unattend_conf.set_conf_value(
+            name='metadata_report_provisioning_completed', value='false')
+        self._cbinit_unattend_conf.set_conf_value(
+            name='trim_enabled', value='true')
 
 
 class CloudbaseinitIndependentPlugins(CloudbaseinitEnableTrim):
