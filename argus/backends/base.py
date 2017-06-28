@@ -52,6 +52,8 @@ class BaseBackend(object):
 
         self.userdata = userdata
         self.metadata = metadata
+        self._username = None
+        self._password = None
 
     @abc.abstractmethod
     def setup_instance(self):
