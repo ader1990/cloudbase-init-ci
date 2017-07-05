@@ -251,10 +251,11 @@ def gzip_data(data):
 
     :param data: The data we want to compress.
     """
-    buff = StringIO()
-    with gzip.GzipFile(fileobj=buff, mode="w") as fd:
-        fd.write(data)
-    return buff.getvalue()
+    pass
+    #buff = StringIO()
+    #with gzip.GzipFile(fileobj=buff, mode="w") as fd:
+    #    fd.write(data)
+    #return buff.getvalue()
 
 
 class cached_property(object):  # pylint: disable=invalid-name

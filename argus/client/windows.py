@@ -45,7 +45,14 @@ THREADS = 1
 
 
 def _encode(data):
-    encoded = base64.b64encode(data)
+    if not data:
+        pass
+    LOG.info(data)
+    try:
+        encoded = base64.b64encode(bytes(data, 'utf-8'))
+    except Exception:
+        encoded = base64.b64encode(data)
+
     if six.PY3:
         encoded = encoded.decode()
     return encoded

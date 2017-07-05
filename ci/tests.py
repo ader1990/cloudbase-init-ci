@@ -31,6 +31,7 @@ from argus import util
 
 
 def _availability_zones():
+    api_manager = None
     try:
         api_manager = manager.APIManager()
         zones = api_manager.availability_zone_client.list_availability_zones()
@@ -39,10 +40,8 @@ def _availability_zones():
     except:
         return {}
     finally:
-        try:
+        if api_manager:
             api_manager.cleanup_credentials()
-        except:
-            pass
 
 CONFIG = argus_config.CONFIG
 AVAILABILITY_ZONES = _availability_zones()

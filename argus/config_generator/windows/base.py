@@ -20,7 +20,7 @@ import six
 try:
     from StringIO import StringIO
 except ImportError:
-    import io as StringIO
+    from io import StringIO
 
 from argus.config_generator import base
 from argus import log as argus_log
@@ -63,8 +63,10 @@ class BaseWindowsConfig(base.BaseConfig):
     @staticmethod
     def _get_base_conf(config_name):
         """Return a ConfigParser object with default values."""
-        base_conf = StringIO(
-            util.get_resource(config_name))
+        res = util.get_resource(config_name)
+        #import pdb; pdb.set_trace()
+        base_conf = StringIO(res.decode())
+        
         conf = six.moves.configparser.ConfigParser()
 
         # NOTE(dtoncu): `readfp` is deprecated since Python 3.2,
@@ -102,5 +104,7 @@ class BaseWindowsConfig(base.BaseConfig):
         data = buff.read()
 
         LOG.debug("Writing data in file '%s'.", file_path)
+        data_all = ""
         for line in data.splitlines():
-            self._client.write_file(data=line, remote_destination=file_path)
+            data_all += (line + "\r\n")
+        self._client.write_file(data=data_all, remote_destination=file_path)

@@ -15,25 +15,16 @@ class LocalBackend(windows_backend.WindowsBackendMixin,
         that are already installed and ready"""
     def __init__(self, name=None, userdata=None, metadata=None,
                  availability_zone=None):
-        self._name = name
-        self._availability_zone = availability_zone
-        self.userdata = userdata
-        self.metadata = metadata
+        super(LocalBackend, self).__init__(name=name, userdata=userdata,
+                                           metadata=metadata,
+                                           availability_zone=availability_zone)
         self._username = CONFIG.local.username
         self._password = CONFIG.local.password
 
-    def get_remote_client(self, username=None, password=None,
-                          protocol='http', **kwargs):
-        if username is None:
-            username = self._username
-        if password is None:
-            password = self._password
-
-        return windows.WinRemoteClient(self.floating_ip(),
-                                       username, password,
-                                       transport_protocol=protocol)
-
-    remote_client = util.cached_property(get_remote_client, 'remote_client')
+    def get_remote_client(self, protocol='http', **kwargs):
+        super(LocalBackend, self).get_remote_client(self._username,
+                                                    self._password,
+                                                    protocol, **kwargs)
 
     def setup_instance(self):
         pass

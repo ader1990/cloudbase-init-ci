@@ -28,7 +28,8 @@ from argus import config as argus_config
 from argus import exceptions
 from argus.introspection.cloud import base
 from argus import util
-
+from argus import log as argus_log
+LOG = argus_log.LOG
 CONFIG = argus_config.CONFIG
 
 # escaped characters for powershell paths
@@ -281,8 +282,21 @@ class InstanceIntrospection(base.CloudInstanceIntrospection):
             cmd, command_type=util.CMD)
         return parse_netsh_output(stdout)[0]
 
+    def get_as_string(self, value):
+        if value is None or isinstance(value, six.text_type):
+            return value
+        else:
+            try:
+                return value.decode()
+            except Exception:
+                # This is important, because None will be returned,
+                # but not that serious to raise an exception.
+                #import pdb;pdb.set_trace()
+                LOG.error("Couldn't decode: %r", value)
+                return str(value)
+
     def get_cloudbaseinit_traceback(self):
-        code = util.get_resource('windows/get_traceback.ps1')
+        code = self.get_as_string(util.get_resource('windows/get_traceback.ps1'))
         remote_script = "C:\\{}.ps1".format(util.rand_name())
         with _create_tempfile(content=code) as tmp:
             self.remote_client.copy_file(tmp, remote_script)

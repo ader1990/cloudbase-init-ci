@@ -20,7 +20,11 @@ from six.moves import configparser
 from argus import config as argus_config
 from argus.config_generator.windows import base
 from argus.introspection.cloud import windows as introspect
+from argus import log as argus_log
 from argus import util
+
+
+LOG = argus_log.LOG
 
 CONFIG = argus_config.CONFIG
 
@@ -35,8 +39,21 @@ class BasePopulatedCBInitConfig(base.BaseWindowsConfig):
         util.OPEN_NEBULA_SERVICE: "opennebulaservice.OpenNebulaService",
         util.CLOUD_STACK_SERVICE: "cloudstack.CloudStack",
         util.MAAS_SERVICE: "maasservice.MaaSHttpService",
-        util.NO_SERVICE: ""
+        util.NO_SERVICE: "",
     }
+
+    def get_as_string(self, value):
+        if value is None or isinstance(value, six.text_type):
+            return value
+        else:
+            try:
+                return value.decode()
+            except Exception:
+                # This is important, because None will be returned,
+                # but not that serious to raise an exception.
+                #import pdb;pdb.set_trace()
+                LOG.error("Couldn't decode: %r", value)
+                return str(value)
 
     def __init__(self, client):
         super(BasePopulatedCBInitConfig, self).__init__(client)
@@ -45,7 +62,12 @@ class BasePopulatedCBInitConfig(base.BaseWindowsConfig):
         """Set a config value in the specified section."""
         if not self.conf.has_section(section) and section != "DEFAULT":
             self.conf.add_section(section)
-        self.conf.set(section, name, value)
+        
+        LOG.info("Couldn't decode  val: %r", value)
+        LOG.info("Couldn't decode section: %r", section)
+                
+        LOG.info("Couldn't decode name: %r", name)
+        self.conf.set(section, self.get_as_string(name), self.get_as_string(value))
 
     def append_conf_value(self, name, value="", section="DEFAULT"):
         """Appends a config value to a specified section."""
@@ -116,7 +138,7 @@ class BasePopulatedCBInitConfig(base.BaseWindowsConfig):
             service_type = [service_type]
 
         service_type = [self._get_service(serv) for serv in service_type]
-        conf_value = ",".join(service_type)
+        conf_value = ",".join(serv for serv in service_type if serv)
         self.set_conf_value("metadata_services", conf_value)
 
     def apply_config(self, path):
